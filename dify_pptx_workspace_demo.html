@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dify パワポワークスペース</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --navy:   #1E2761;
+    --accent: #4F8EF7;
+    --purple: #6366F1;
+    --green:  #22C55E;
+    --white:  #FFFFFF;
+    --bg:     #F1F5F9;
+    --border: #E2E8F0;
+    --text:   #1E293B;
+    --muted:  #64748B;
+    --p1-w:   130px;
+    --p2-w:   260px;
+    --p4-h:   180px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  /* ── Top Bar ─────────────────────── */
+  #topbar {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    height: 44px;
+    display: flex; align-items: center;
+    padding: 0 14px; gap: 10px; flex-shrink: 0;
+  }
+  .app-icon { width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:13px;flex-shrink:0; }
+  .app-name { font-weight:700;color:var(--navy);font-size:13px; }
+  .mode-badge { background:#EEF2FF;color:var(--accent);font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px; }
+  .file-btn { background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 12px;font-size:11px;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:5px;transition:background .15s; }
+  .file-btn:hover { background:#E2EAF8; }
+  .demo-badge { margin-left:auto;background:#FEF3C7;color:#92400E;font-size:11px;font-weight:600;padding:3px 12px;border-radius:20px;border:1px solid #FDE68A; }
+
+  /* ── Pane Headers ────────────────── */
+  #pane-headers { background:#F8FAFC;border-bottom:1px solid var(--border);height:30px;display:flex;align-items:center;flex-shrink:0; }
+  .ph { display:flex;align-items:center;gap:6px;padding:0 12px;height:100%;font-size:11px;font-weight:500;color:var(--text);border-right:1px solid var(--border); }
+  .ph-dot { width:8px;height:8px;border-radius:50%; }
+  .ph-p1 { width:var(--p1-w);flex-shrink:0; }
+  .ph-p2 { width:var(--p2-w);flex-shrink:0; }
+  .ph-p3 { flex:1;border-right:none; }
+  .online-badge { background:#DCFCE7;color:#16A34A;font-size:10px;padding:1px 7px;border-radius:20px;display:flex;align-items:center;gap:3px; }
+  .online-dot { width:6px;height:6px;background:#22C55E;border-radius:50%;animation:blink 2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1}50%{opacity:.35} }
+
+  /* ── Main ────────────────────────── */
+  #main { display:flex;flex:1;overflow:hidden; }
+
+  /* ── P1 Thumbs ───────────────────── */
+  #p1 { width:var(--p1-w);flex-shrink:0;background:#F1F5F9;border-right:1px solid var(--border);overflow-y:auto;padding:8px 6px; }
+  .slide-count { font-size:10px;color:var(--muted);padding:2px 4px 6px; }
+  .thumb { display:flex;align-items:center;gap:6px;padding:4px;border-radius:6px;cursor:pointer;margin-bottom:4px;transition:background .15s; }
+  .thumb:hover { background:#E2EAF8; }
+  .thumb.active { background:#DBEAFE;outline:2px solid var(--accent); }
+  .thumb-num { font-size:10px;color:var(--muted);width:14px;text-align:center;flex-shrink:0; }
+  .thumb-mini { width:104px;height:66px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;flex-shrink:0;border:1px solid rgba(0,0,0,.08);overflow:hidden; }
+
+  /* ── P2 Chat ─────────────────────── */
+  #p2 { width:var(--p2-w);flex-shrink:0;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column; }
+  .chat-tabs { display:flex;border-bottom:1px solid var(--border);background:#F8FAFC; }
+  .chat-tab { flex:1;text-align:center;padding:7px 0;font-size:11px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s; }
+  .chat-tab.active { color:var(--accent);border-bottom-color:var(--accent);background:white;font-weight:500; }
+  #chat-messages { flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px; }
+  .msg { max-width:90%;animation:fadeUp .22s ease; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none} }
+  .msg.ai  { align-self:flex-start; }
+  .msg.user{ align-self:flex-end; }
+  .msg-bubble { padding:8px 11px;border-radius:10px;font-size:12px;line-height:1.6;word-break:break-word; }
+  .msg.ai   .msg-bubble { background:#F0F9FF;border-radius:2px 10px 10px 10px; }
+  .msg.user .msg-bubble { background:var(--purple);color:#fff;border-radius:10px 10px 2px 10px; }
+  .msg-time { font-size:10px;color:var(--muted);margin-top:3px;padding:0 2px; }
+  .msg.user .msg-time { text-align:right; }
+  .typing { display:flex;gap:4px;align-items:center;padding:10px 12px;background:#F0F9FF;border-radius:2px 10px 10px 10px;width:fit-content; }
+  .td { width:6px;height:6px;border-radius:50%;background:var(--accent);animation:bounce 1.1s infinite; }
+  .td:nth-child(2){animation-delay:.2s}.td:nth-child(3){animation-delay:.4s}
+  @keyframes bounce { 0%,80%,100%{transform:scale(1)}40%{transform:scale(1.45)} }
+  .chat-input-area { border-top:1px solid var(--border);padding:8px;display:flex;gap:6px;align-items:flex-end; }
+  #chat-input { flex:1;resize:none;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;min-height:36px;max-height:90px;color:var(--text);background:var(--bg); }
+  #chat-input:focus { outline:none;border-color:var(--accent);background:#fff; }
+  #send-btn { width:32px;height:32px;flex-shrink:0;background:var(--accent);border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;color:#fff; }
+  #send-btn:hover { background:#3B7DE8; }
+  #send-btn:disabled { background:var(--border);cursor:not-allowed; }
+  .chips { display:flex;flex-wrap:wrap;gap:5px;margin-top:8px; }
+  .chip { background:#EEF2FF;color:var(--accent);border:1px solid #C7D2FE;border-radius:20px;padding:3px 10px;font-size:10px;cursor:pointer;transition:background .15s; }
+  .chip:hover { background:#E0E7FF; }
+
+  /* ── P3+P4 right column ──────────── */
+  #right-col { flex:1;display:flex;flex-direction:column;overflow:hidden; }
+
+  /* ── P3 Editor ───────────────────── */
+  #p3 { flex:1;background:#fff;border-bottom:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;min-height:0; }
+  .editor-toolbar { border-bottom:1px solid var(--border);padding:5px 10px;display:flex;align-items:center;gap:5px;background:#F8FAFC;flex-shrink:0; }
+  .tbtn { padding:3px 9px;border:1px solid var(--border);background:#fff;border-radius:4px;cursor:pointer;font-size:12px;transition:background .1s; }
+  .tbtn:hover { background:var(--bg); }
+  .ref-badge { margin-left:auto;background:#DCFCE7;color:#16A34A;font-size:10px;padding:2px 9px;border-radius:20px;opacity:0;transition:opacity .3s;display:flex;align-items:center;gap:4px; }
+  .ref-badge.show { opacity:1; }
+  .slide-viewport { flex:1;padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;gap:14px;min-height:0; }
+  .slide-frame { width:100%;max-width:900px;aspect-ratio:16/9;border-radius:8px;box-shadow:0 6px 32px rgba(0,0,0,.14);overflow:hidden;flex-shrink:0;transition:box-shadow .2s; }
+  .slide-frame:hover { box-shadow:0 10px 40px rgba(0,0,0,.2); }
+  .slide-nav { display:flex;align-items:center;gap:12px;font-size:12px;color:var(--muted);flex-shrink:0; }
+  .nav-btn { width:28px;height:28px;background:var(--bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .1s; }
+  .nav-btn:hover { background:#E2EAF8; }
+  .sc { width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px; }
+  .sc.left { align-items:flex-start; }
+
+  /* ── P4 bottom strip ─────────────── */
+  #p4 { height:var(--p4-h);flex-shrink:0;background:#fff;display:flex;flex-direction:row;overflow:hidden;border-top:1px solid var(--border); }
+  .p4-label { font-size:10px;color:var(--muted);font-weight:500;margin-bottom:5px;white-space:nowrap; }
+
+  /* gen images section */
+  .p4-gen { padding:10px 12px;border-right:1px solid var(--border);display:flex;flex-direction:column;min-width:0; }
+  .p4-gen-top { display:flex;align-items:baseline;gap:8px;margin-bottom:6px;flex-shrink:0; }
+  .p4-title { font-weight:600;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+  .p4-sub { font-size:10px;color:var(--muted);flex-shrink:0; }
+  .img-grid { display:flex;gap:5px;flex:1;min-height:0; }
+  .ig { flex:1;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:rgba(255,255,255,.85);border:2px solid transparent;transition:border-color .15s,transform .1s;position:relative;overflow:hidden;min-width:0; }
+  .ig:hover { transform:scale(1.04); }
+  .ig.sel { border-color:var(--accent); }
+  .ig .ck { position:absolute;top:3px;right:3px;width:15px;height:15px;background:var(--accent);border-radius:50%;display:none;align-items:center;justify-content:center;font-size:8px;color:#fff; }
+  .ig.sel .ck { display:flex; }
+  .p4-gen-btns { display:flex;gap:4px;margin-top:6px;flex-shrink:0; }
+  .ibtn { flex:1;padding:5px;background:var(--accent);color:#fff;border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;white-space:nowrap; }
+  .ibtn:hover { background:#3B7DE8; }
+  .rbtn { width:26px;background:var(--bg);border:1px solid var(--border);border-radius:5px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:background .15s; }
+  .rbtn:hover { background:#E2EAF8; }
+
+  /* net search section */
+  .p4-net { padding:10px 12px;display:flex;flex-direction:column;min-width:0; }
+  .net-label { font-size:11px;color:var(--muted);font-weight:500;margin-bottom:5px;white-space:nowrap; }
+  .srow { display:flex;gap:4px;margin-bottom:6px; }
+  .sinp { flex:1;border:1px solid var(--border);border-radius:5px;padding:4px 8px;font-size:11px;font-family:inherit;color:var(--text);background:var(--bg);min-width:0; }
+  .sinp:focus { outline:none;border-color:var(--accent); }
+  .sbtn { padding:4px 10px;background:var(--accent);color:#fff;border:none;border-radius:5px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap; }
+  .net-grid { display:flex;gap:5px;flex:1;min-height:0; }
+  .ng { flex:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;cursor:pointer;transition:opacity .15s;border:2px solid transparent;color:#475569;min-width:0; }
+  .ng:hover { opacity:.8; }
+  .ng.sel { border-color:var(--accent); }
+  .p4-net-btns { margin-top:6px;flex-shrink:0; }
+  .nibtn { width:100%;padding:5px;background:var(--navy);color:#fff;border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;white-space:nowrap; }
+  .nibtn:hover { background:#162053; }
+
+  ::-webkit-scrollbar{width:4px;height:4px}
+  ::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:10px}
+
+  #toast { position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:8px 20px;border-radius:20px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:100;white-space:nowrap; }
+  #toast.show { opacity:1; }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="app-icon">D</div>
+  <span class="app-name">Dify パワポワークスペース</span>
+  <span class="mode-badge">企画書モード</span>
+  <button class="file-btn">▲ ハワイ旅行企画書.pptx</button>
+  <span class="demo-badge">🎮 デモモード</span>
+</div>
+
+<div id="pane-headers">
+  <div class="ph ph-p1"><div class="ph-dot" style="background:#4F8EF7"></div>目次</div>
+  <div class="ph ph-p2">
+    <div class="ph-dot" style="background:#22C55E"></div>AIチャット
+    <span class="online-badge"><span class="online-dot"></span>オンライン</span>
+  </div>
+  <div class="ph ph-p3"><div class="ph-dot" style="background:#4F8EF7"></div>スライド編集</div>
+</div>
+
+<div id="main">
+
+  <div id="p1">
+    <div class="slide-count">8 slides</div>
+    <div id="thumb-list"></div>
+  </div>
+
+  <div id="p2">
+    <div class="chat-tabs">
+      <div class="chat-tab active" id="tab-slide" onclick="switchTab('slide')">スライド編集</div>
+      <div class="chat-tab" id="tab-img" onclick="switchTab('img')">画像生成</div>
+    </div>
+    <div id="chat-messages"></div>
+    <div class="chat-input-area">
+      <textarea id="chat-input" rows="1" placeholder="例：「観光地を5つにして」「タイトルを変えて」"></textarea>
+      <button id="send-btn" onclick="sendMsg()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="right-col">
+  <div id="p3">
+    <div class="editor-toolbar">
+      <button class="tbtn" onclick="toast('✏️ 太字を適用しました')"><b>B</b></button>
+      <button class="tbtn" onclick="toast('✏️ 斜体を適用しました')"><i>I</i></button>
+      <button class="tbtn" onclick="toast('✏️ 整列を変更しました')">≡</button>
+      <button class="tbtn" onclick="toast('✏️ レイアウトを変更しました')">⊡</button>
+      <div class="ref-badge" id="ref-badge">✓ 反映済み</div>
+    </div>
+    <div class="slide-viewport">
+      <div class="slide-frame" id="slide-frame"></div>
+      <div class="slide-nav">
+        <div class="nav-btn" onclick="prevSlide()">‹</div>
+        <span id="slide-ind">1 / 8</span>
+        <div class="nav-btn" onclick="nextSlide()">›</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="p4">
+    <!-- 生成画像セクション -->
+    <div class="p4-gen" style="flex:1.2">
+      <div class="p4-gen-top">
+        <div class="p4-label">🎨 生成画像</div>
+        <div class="p4-title" id="gen-title">近未来のビーチ、青系</div>
+        <div class="p4-sub" id="gen-sub">09:05・4枚</div>
+      </div>
+      <div class="img-grid" id="gen-grid"></div>
+      <div class="p4-gen-btns">
+        <button class="ibtn" onclick="insertGen()">▲ 挿入</button>
+        <button class="rbtn" onclick="regenImages()" title="再生成">↻</button>
+      </div>
+    </div>
+
+    <!-- ネット画像検索セクション -->
+    <div class="p4-net" style="flex:1">
+      <div class="net-label">⊕ ネット画像検索</div>
+      <div class="srow">
+        <input class="sinp" id="net-q" placeholder="キーワード">
+        <button class="sbtn" onclick="netSearch()">検索</button>
+      </div>
+      <div class="net-grid" id="net-grid"></div>
+      <div class="p4-net-btns">
+        <button class="nibtn" onclick="insertNet()">▲ スライドに挿入</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+// ── State ───────────────────────────────────────────────
+let cur = 0, busy = false, selGen = 0, selNet = 0, genPalIdx = 0, currentTab = 'slide';
+
+const slides = [
+  { label:'表紙',   bg:'#0C4A6E', dark:true  },
+  { label:'目次',   bg:'#F8FAFC', dark:false },
+  { label:'旅程',   bg:'#EFF6FF', dark:false },
+  { label:'観光地', bg:'#F0FDF4', dark:false },
+  { label:'グルメ', bg:'#FFFBEB', dark:false },
+  { label:'ホテル', bg:'#F0F9FF', dark:false },
+  { label:'費用',   bg:'#FFF7ED', dark:false },
+  { label:'まとめ', bg:'#1D4ED8', dark:true  },
+];
+
+const state = {
+  title:    '2025年度\nハワイ旅行企画書',
+  subtitle: '旅行部　企画開発チーム',
+  spots:    ['ダイヤモンドヘッド','ワイキキビーチ','ハナウマ湾','マノアの滝'],
+  budget:   { air:'¥120,000', hotel:'¥80,000', local:'¥50,000', total:'¥250,000' },
+  summary:  'ハワイ旅行で最高の体験を。\nご検討よろしくお願いいたします。',
+};
+
+// ── Slide HTML ──────────────────────────────────────────
+function slideHTML(i) {
+  const row = (l,v,border='#E2E8F0') => `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid ${border};font-size:11px">${l}${v}</div>`;
+  switch(i) {
+    case 0: return `<div class="sc" style="background:linear-gradient(135deg,#0C4A6E,#1D4ED8)">
+      <div style="font-weight:700;font-size:clamp(14px,2.6vw,22px);color:#fff;text-align:center;line-height:1.3">${state.title.replace('\n','<br>')}</div>
+      <div style="color:#BAE6FD;font-size:11px;margin-top:8px">${state.subtitle}</div>
+    </div>`;
+    case 1: return `<div class="sc left" style="background:#F8FAFC">
+      <div style="font-weight:700;color:#0C4A6E;font-size:15px;margin-bottom:12px">目次</div>
+      ${['旅程','観光地','グルメ','ホテル','費用','まとめ'].map((t,j)=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid #E2E8F0">
+          <span style="color:#4F8EF7;font-size:11px;font-weight:700;width:16px">${j+1}</span>
+          <span style="font-size:12px">${t}</span>
+        </div>`).join('')}
+    </div>`;
+    case 2: return `<div class="sc left" style="background:#EFF6FF">
+      <div style="font-weight:700;color:#1D4ED8;font-size:15px;margin-bottom:10px">旅程（5泊7日）</div>
+      ${[['Day1','成田→ホノルル','移行日'],['Day2','ワイキキビーチ','マリンスポーツ'],['Day3','ダイヤモンドヘッド','登山＋ランチ'],['Day4','ノースショア','サーフィン'],['Day5','ショッピング','アラモアナ'],['Day6','ハナウマ湾','シュノーケリング'],['Day7','帰国','成田着']].map(([d,t,s])=>`
+        <div style="display:flex;gap:8px;padding:3px 0;font-size:10px;border-bottom:1px dashed #BFDBFE">
+          <span style="color:#4F8EF7;font-weight:700;min-width:36px">${d}</span>
+          <span style="font-weight:500;flex:1">${t}</span>
+          <span style="color:#64748B">${s}</span>
+        </div>`).join('')}
+    </div>`;
+    case 3: return `<div class="sc left" style="background:#F0FDF4">
+      <div style="font-weight:700;color:#15803D;font-size:15px;margin-bottom:10px">観光地ピックアップ</div>
+      ${state.spots.map(s=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dashed #BBF7D0">
+          <span style="color:#22C55E;font-size:10px">◆</span>
+          <span style="font-size:12px">${s}</span>
+        </div>`).join('')}
+    </div>`;
+    case 4: return `<div class="sc left" style="background:#FFFBEB">
+      <div style="font-weight:700;color:#B45309;font-size:15px;margin-bottom:10px">おすすめグルメ</div>
+      ${[['ロミロミサーモン','伝統ハワイアン料理'],['ガーリックシュリンプ','ノースショアの名物'],['マラサダ','ポルトガル風ドーナツ'],['ポキボウル','新鮮な海鮮丼風']].map(([n,d])=>`
+        <div style="padding:4px 0;border-bottom:1px solid #FDE68A">
+          <div style="font-size:11px;font-weight:600;color:#92400E">${n}</div>
+          <div style="font-size:10px;color:#64748B">${d}</div>
+        </div>`).join('')}
+    </div>`;
+    case 5: return `<div class="sc left" style="background:#F0F9FF">
+      <div style="font-weight:700;color:#0369A1;font-size:15px;margin-bottom:10px">推奨ホテル</div>
+      ${[['ヒルトン・ハワイアン・ビレッジ','★★★★★','¥35,000/泊'],['ロイヤル・ハワイアン','★★★★★','¥42,000/泊'],['ワイキキ・ビーチコマー','★★★★','¥22,000/泊']].map(([n,r,p])=>`
+        <div style="padding:5px 0;border-bottom:1px solid #BAE6FD;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:11px;font-weight:600;color:#0369A1">${n}</div>
+            <div style="font-size:10px;color:#F59E0B">${r}</div>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:#0C4A6E">${p}</div>
+        </div>`).join('')}
+    </div>`;
+    case 6: return `<div class="sc left" style="background:#FFF7ED">
+      <div style="font-weight:700;color:#C2410C;font-size:15px;margin-bottom:10px">費用見積もり</div>
+      ${[['航空券',state.budget.air+'/人'],['ホテル',state.budget.hotel+'/人'],['現地費用',state.budget.local+'/人']].map(([l,v])=>`
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #FED7AA;font-size:11px">
+          <span style="color:#7C2D12">${l}</span><span style="color:#92400E;font-weight:500">${v}</span>
+        </div>`).join('')}
+      <div style="display:flex;justify-content:space-between;padding:8px 0 2px;font-size:14px;font-weight:700;color:#C2410C;border-top:2px solid #C2410C;margin-top:4px">
+        <span>合計</span><span>${state.budget.total}/人</span>
+      </div>
+    </div>`;
+    case 7: return `<div class="sc" style="background:linear-gradient(135deg,#1D4ED8,#0C4A6E)">
+      <div style="font-weight:700;color:#fff;font-size:18px;margin-bottom:10px">まとめ</div>
+      <div style="color:#BAE6FD;font-size:11px;text-align:center;line-height:1.8">${state.summary.replace(/\n/g,'<br>')}</div>
+    </div>`;
+  }
+}
+
+// ── Render ──────────────────────────────────────────────
+function renderThumbs() {
+  document.getElementById('thumb-list').innerHTML = slides.map((s,i) => `
+    <div class="thumb ${i===cur?'active':''}" onclick="goSlide(${i})">
+      <div class="thumb-num">${i+1}</div>
+      <div class="thumb-mini" style="background:${s.bg}">
+        <span style="color:${s.dark?'rgba(255,255,255,.85)':'#1E2761'}">${s.label}</span>
+      </div>
+    </div>`).join('');
+}
+
+function renderSlide(i) {
+  document.getElementById('slide-frame').innerHTML = slideHTML(i);
+  document.getElementById('slide-ind').textContent = `${i+1} / ${slides.length}`;
+}
+
+function goSlide(i) { cur=i; renderThumbs(); renderSlide(i); }
+function prevSlide() { if(cur>0) goSlide(cur-1); }
+function nextSlide() { if(cur<slides.length-1) goSlide(cur+1); }
+
+// ── Gen Images ──────────────────────────────────────────
+const palettes = [
+  ['#0369A1','#065F46','#92400E','#1E3A8A'],
+  ['#7C3AED','#B45309','#0891B2','#BE123C'],
+  ['#1D4ED8','#15803D','#D97706','#7E22CE'],
+  ['#0284C7','#047857','#DC2626','#4338CA'],
+];
+const genLabels = ['BEACH','PALM','ALOHA','WAVE'];
+
+function renderGenGrid() {
+  const pal = palettes[genPalIdx % palettes.length];
+  document.getElementById('gen-grid').innerHTML = pal.map((c,i) => `
+    <div class="ig ${i===selGen?'sel':''}" style="background:${c};min-height:60px" onclick="selGen=${i};renderGenGrid()">
+      <div class="ck">✓</div>
+      <span style="position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:8px">${genLabels[i]}</span>
+    </div>`).join('');
+}
+function regenImages() {
+  genPalIdx++; selGen=0; renderGenGrid();
+  document.getElementById('gen-sub').textContent = nowStr()+'・4枚生成（再生成）';
+  toast('🎨 4枚再生成しました');
+}
+function insertGen() { toast('✅ スライドに画像を挿入しました'); showRef(); }
+
+// ── Net Search ──────────────────────────────────────────
+const netCols = ['#DBEAFE','#FEF3C7','#DCFCE7','#FCE7F3'];
+function renderNetGrid() {
+  document.getElementById('net-grid').innerHTML = netCols.map((c,i) => `
+    <div class="ng ${i===selNet?'sel':''}" style="background:${c};min-height:50px" onclick="selNet=${i};renderNetGrid()">結果${i+1}</div>`).join('');
+}
+function netSearch() {
+  const q = document.getElementById('net-q').value.trim();
+  if (!q) return;
+  toast(`🔍「${q}」を検索中...`);
+  setTimeout(() => { renderNetGrid(); toast('🖼️ 4件の画像が見つかりました'); }, 700);
+}
+function insertNet() { toast('✅ ネット画像をスライドに挿入しました'); showRef(); }
+
+// ── Chat ────────────────────────────────────────────────
+function nowStr() {
+  const d=new Date();
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+
+function addMsg(role, html) {
+  const c = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.innerHTML = `<div class="msg-bubble">${html}</div><div class="msg-time">${role==='ai'?'AI　':''}${nowStr()}</div>`;
+  c.appendChild(div);
+  c.scrollTop = c.scrollHeight;
+}
+
+function showTyping() {
+  const c = document.getElementById('chat-messages');
+  const d = document.createElement('div');
+  d.className='msg ai'; d.id='typing';
+  d.innerHTML=`<div class="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+  c.appendChild(d); c.scrollTop=c.scrollHeight;
+}
+function removeTyping() { const e=document.getElementById('typing'); if(e) e.remove(); }
+
+function switchTab(t) {
+  currentTab = t;
+  document.getElementById('tab-slide').className = 'chat-tab'+(t==='slide'?' active':'');
+  document.getElementById('tab-img').className   = 'chat-tab'+(t==='img'?' active':'');
+  document.getElementById('chat-input').placeholder = t==='slide'
+    ? '例：「観光地を5つにして」「タイトルを変えて」'
+    : '例：「青いビーチの画像を生成して」';
+}
+
+// ── AI Response (simulated) ─────────────────────────────
+function aiReply(text) {
+  const l = text.toLowerCase();
+
+  if (l.includes('観光') || l.includes('スポット')) {
+    const m = text.match(/(\d+)/);
+    const n = m ? Math.min(parseInt(m[1]),8) : 5;
+    const all = ['ダイヤモンドヘッド','ワイキキビーチ','ハナウマ湾','マノアの滝','パールハーバー','マカプウ岬','カイルアビーチ','ポリネシア文化センター'];
+    state.spots = all.slice(0,n);
+    setTimeout(()=>{ goSlide(3); showRef(); }, 500);
+    return `観光地を<b>${n}つ</b>に更新しました！<br>スライド4（観光地）に反映されています。`;
+  }
+
+  if (l.includes('タイトル') || l.includes('表紙')) {
+    const m = text.match(/「(.+?)」/);
+    if (m) { state.title = m[1]; setTimeout(()=>{ goSlide(0); showRef(); },500); return `表紙タイトルを<b>「${m[1]}」</b>に変更しました！`; }
+    setTimeout(()=>{ goSlide(0); },300);
+    return `表紙スライドを表示しました。<br>タイトルを変えるには「タイトルを「〇〇」に変えて」と入力してみてください。`;
+  }
+
+  if (l.includes('費用') || l.includes('合計') || l.includes('金額') || l.includes('予算')) {
+    const m = text.match(/[¥￥]?([\d,]+)/);
+    if (m) state.budget.total = `¥${m[1].replace(/,/g,'')}`;
+    setTimeout(()=>{ goSlide(6); showRef(); },500);
+    return `費用スライドを更新しました。<br>合計金額を<b>${state.budget.total}/人</b>に変更しています。`;
+  }
+
+  if (l.includes('まとめ') || l.includes('締め')) {
+    state.summary = 'ハワイ旅行で素晴らしい体験を。\nチームの絆を深めましょう。\nご検討よろしくお願いいたします。';
+    setTimeout(()=>{ goSlide(7); showRef(); },500);
+    return `まとめスライドを更新しました！<br>文章をより締まった内容に変更しています。`;
+  }
+
+  if (l.includes('旅程') || l.includes('スケジュール')) {
+    setTimeout(()=>{ goSlide(2); },300);
+    return `旅程スライド（Day1〜Day7）を表示しました。<br>内容の変更があればお知らせください。`;
+  }
+
+  if (l.includes('ホテル') || l.includes('宿泊')) {
+    setTimeout(()=>{ goSlide(5); },300);
+    return `ホテルスライドを表示しました。<br>推奨ホテルの変更や追加があればお知らせください。`;
+  }
+
+  if (l.includes('グルメ') || l.includes('食事') || l.includes('料理')) {
+    setTimeout(()=>{ goSlide(4); },300);
+    return `グルメスライドを表示しました。<br>おすすめグルメの追加・変更ができます。`;
+  }
+
+  if (currentTab==='img' || l.includes('画像') || l.includes('写真') || l.includes('生成')) {
+    const label = text.replace(/[「」]/g,'').trim() || '生成された画像';
+    setTimeout(()=>{
+      document.getElementById('gen-title').textContent = label;
+      document.getElementById('gen-sub').textContent = nowStr()+'・4枚生成';
+      genPalIdx++; selGen=0; renderGenGrid();
+      toast('🎨 画像を生成しました');
+    },800);
+    return `<b>「${label}」</b>の画像を4枚生成しました！<br>右パネルから好みの候補を選んで挿入ボタンを押してください。`;
+  }
+
+  if (l.includes('背景') || l.includes('色') || l.includes('デザイン')) {
+    setTimeout(()=>{ showRef(); },400);
+    return `デザインを更新しました！<br>現在表示中のスライドに反映されています。`;
+  }
+
+  return `了解しました！<br>以下のような指示も試してみてください：
+    <div class="chips" style="margin-top:6px">
+      <span class="chip" onclick="useChip(this)">観光地を6つにして</span>
+      <span class="chip" onclick="useChip(this)">費用を280,000円に変えて</span>
+      <span class="chip" onclick="useChip(this)">まとめを更新して</span>
+    </div>`;
+}
+
+function sendMsg() {
+  if (busy) return;
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  addMsg('user', esc(text));
+  input.value = '';
+  busy = true;
+  document.getElementById('send-btn').disabled = true;
+  showTyping();
+  setTimeout(()=>{
+    removeTyping();
+    addMsg('ai', aiReply(text));
+    busy = false;
+    document.getElementById('send-btn').disabled = false;
+  }, 800 + Math.random()*600);
+}
+
+function useChip(el) {
+  document.getElementById('chat-input').value = el.textContent;
+  sendMsg();
+}
+
+function showRef() {
+  const b = document.getElementById('ref-badge');
+  b.classList.add('show');
+  setTimeout(()=>b.classList.remove('show'),3000);
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+// ── Init ────────────────────────────────────────────────
+document.getElementById('chat-input').addEventListener('keydown', e => {
+  if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+});
+
+renderThumbs();
+renderSlide(0);
+renderGenGrid();
+renderNetGrid();
+
+// Welcome message
+setTimeout(()=>{
+  const c = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.innerHTML = `
+    <div class="msg-bubble">
+      こんにちは！<br>
+      「ハワイ旅行企画書」を読み込みました。<br>
+      チャットで指示してみてください！
+      <div class="chips">
+        <span class="chip" onclick="useChip(this)">観光地を5つにして</span>
+        <span class="chip" onclick="useChip(this)">費用を280,000円に変えて</span>
+        <span class="chip" onclick="useChip(this)">まとめを更新して</span>
+        <span class="chip" onclick="useChip(this)">タイトルを「2025 ハワイ研修」に変えて</span>
+      </div>
+    </div>
+    <div class="msg-time">AI　${nowStr()}</div>`;
+  c.appendChild(div);
+}, 300);
+</script>
+</body>
+</html>
